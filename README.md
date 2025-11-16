@@ -1,155 +1,183 @@
-# Automated IT Audit Risk Dashboard (Python + Power BI)
+🚀 IT Audit Risk Analytics Pipeline (Python)
 
-This repository contains an end-to-end IT audit analytics project designed for your CV / portfolio.
+This project is an end-to-end IT Audit Analytics solution that processes enterprise-style access logs, generates user and permission metadata, applies audit rules, and produces a full IT risk register ready for dashboarding (Power BI / Tableau).
 
-It uses a **real, public enterprise-style access log dataset** (Access-Log-Anomaly-Detection-Dataset)
-and builds:
-- Synthetic but realistic user and permissions data
-- User-level behaviour metrics
-- An IT risk register with severities (High/Medium/Low)
-- A structure ready for a Power BI report and screenshots
+It simulates a real-world IT General Controls (ITGC) access review using a public dataset, automated Python pipeline, and well-defined audit logic.
 
-## 1. Folder structure
+⸻
 
-```text
+📁 Project Structure
 it-audit-risk-dashboard/
-├─ data/
-│  ├─ raw/
-│  │  └─ Access-Log-Anomaly-Detection-Dataset.xls    # you download this
-│  ├─ processed/
-│  │  ├─ logs_enriched.csv
-│  │  ├─ users.csv
-│  │  ├─ permissions.csv
-│  │  └─ risk_register.csv
-├─ src/
-│  └─ build_risk_register.py
-├─ reports/
-│  ├─ powerbi/
-│  │  └─ screenshots/
-│  │     ├─ overview_dashboard.png
-│  │     ├─ risks_by_severity.png
-│  │     ├─ risks_by_department.png
-│  │     ├─ top_risky_users.png
-│  │     └─ user_detail_page.png
-├─ requirements.txt
-├─ .gitignore
-└─ README.md
-```
+│
+├── data/
+│   ├── raw/                     # Place the downloaded dataset here
+│   └── processed/               # Output from the Python pipeline
+│
+├── src/
+│   └── build_risk_register.py   # Main pipeline script
+│
+├── reports/
+│   └── powerbi/
+│       └── screenshots/         # Example visualisations (placeholder)
+│
+├── README.md
+└── requirements.txt
 
-> Note: the actual Power BI `.pbix` file is not included because it must be created
-> on a Windows machine running Power BI Desktop, using the processed CSVs. The
-> repo is fully prepared so you (or an interviewer) can easily build it.
+📊 Dataset
 
-## 2. Dataset
+This project uses the Access-Log-Anomaly-Detection Dataset, a public enterprise-style access log dataset that includes:
+	•	Timestamps
+	•	Masked user IDs
+	•	Source & destination IPs
+	•	Device types
+	•	Resource paths
+	•	Actions (modify, login, delete, etc.)
+	•	Anomaly scores
+	•	Labels (benign/malicious)
 
-Download the Excel file named something like:
+Download the CSV file from the dataset’s GitHub repository and place it here:
+data/raw/Access-Log-Anomaly-Detection-Dataset.csv
 
-> `Access-Log-Anomaly-Detection-Dataset.xls`
+⚙️ Pipeline Overview
 
-from the public GitHub project that hosts it (search the name on GitHub),
-and place it in:
+The processing script performs the following steps:
 
-```text
-data/raw/Access-Log-Anomaly-Detection-Dataset.xls
-```
+1. Load and clean access logs
+	•	Normalises column names
+	•	Parses timestamps
+	•	Adds behaviour features:
+	•	hour of day
+	•	weekend flag
+	•	off-hours flag
+	•	day of week
 
-The dataset contains:
-- `timestamp`, `masked_user`, `source_ip`, `destination_ip`
-- `action`, `resource`, `device_type`
-- `anomaly_score`, `target` (benign/malicious)
+⸻
 
-## 3. How to run the pipeline
+2. Generate synthetic user master data
 
-Create and activate a virtual environment (optional but recommended):
+Based on the users in the log dataset, the pipeline creates a realistic user table containing:
+	•	Department
+	•	Role (analyst, engineer, admin, etc.)
+	•	MFA enabled (yes/no)
+	•	Active / terminated status
+	•	Join & termination dates
+	•	Assigned manager
 
-```bash
+This approximates data typically stored in HR systems / IAM tools.
+
+⸻
+
+3. Generate system permissions
+
+Each user is randomly assigned:
+	•	A set of systems (derived from resource names)
+	•	Access levels (read / write / admin)
+
+Admins and IT staff have a higher probability of admin rights.
+
+⸻
+
+4. Enrich logs with user attributes
+
+Logs are joined with the generated user metadata to form a unified event table:
+	•	User behaviour over time
+	•	Device and IP usage
+	•	Off-hours patterns
+	•	Malicious events
+
+⸻
+
+5. Build user-level behaviour metrics
+
+Metrics include:
+	•	Total events
+	•	Malicious-labelled events
+	•	Average & max anomaly score
+	•	Off-hours activity ratio
+	•	Unique IP addresses used
+	•	Unique devices used
+	•	Last seen timestamp
+
+⸻
+
+6. Generate IT audit findings (Risk Register)
+
+The pipeline applies real-world IT audit rules, including:
+
+🔐 Access Management Risks
+	•	Admin accounts without MFA
+	•	Excessive permissions
+	•	Ex-employee accounts still active
+
+🕒 Logging & Monitoring Risks
+	•	Multiple malicious-labelled events
+	•	High anomaly scores
+	•	Heavy off-hours activity
+	•	Many distinct IP addresses (possible shared credentials)
+
+💤 Dormant Accounts
+	•	Accounts active but not used for >180 days
+
+Each finding includes:
+	•	User ID
+	•	Department & role
+	•	Risk type
+	•	Severity (High/Medium/Low)
+	•	Description
+	•	Evidence
+	•	Numeric severity score
+
+The output is saved to:
+data/processed/risk_register.csv
+
+📈 Dashboarding (Power BI / Tableau)
+
+Although Power BI Desktop requires Windows, the produced CSVs can be visualised using:
+	•	Power BI Desktop
+	•	Tableau Public (recommended for Mac users)
+	•	Looker Studio
+
+Suggested visuals include:
+	•	Risks by severity
+	•	Risks by department
+	•	Risks by type
+	•	High-risk users
+	•	Off-hours activity metrics
+	•	Drill-through per-user risk profiles
+
+Placeholder screenshots are included in:
+reports/powerbi/screenshots/
+
+🛠️ How to Run
 python3 -m venv venv
-source venv/bin/activate  # Mac / Linux
-# or: venv\Scripts\activate  # Windows
-```
-
-Install dependencies:
-
-```bash
+source venv/bin/activate        # Mac / Linux
 pip install -r requirements.txt
-```
-
-Run the processing script:
-
-```bash
 python src/build_risk_register.py
-```
 
-If the raw dataset file is in the correct location, this will create:
+🎯 Purpose of This Project
 
-- `data/processed/users.csv`
-- `data/processed/permissions.csv`
-- `data/processed/logs_enriched.csv`
-- `data/processed/user_metrics.csv`
-- `data/processed/risk_register.csv`
+This project demonstrates skills relevant to:
+	•	IT Audit
+	•	Cybersecurity Audit
+	•	Data Analytics
+	•	Access Management
+	•	IT General Controls (ITGC)
+	•	Python for data automation
+	•	BI dashboard design
 
-These CSVs are exactly what you will connect to from Power BI.
+It is designed to simulate the kind of analytics work performed in:
+	•	Big 4 IT Audit teams
+	•	Cybersecurity consulting
+	•	Risk & Compliance analytics
+	•	Security Operations (SOC) reporting
 
-## 4. IT audit logic implemented
+⸻
 
-The script simulates several **IT General Controls / access review** checks, such as:
-
-- **Ex-employee account still active**  
-  User has a termination date but `is_active = yes` (High severity).
-
-- **Admin account without MFA**  
-  User appears in permissions as having admin access, but `mfa_enabled = no` (High).
-
-- **Multiple malicious-labelled events**  
-  User is associated with several events labelled as malicious in the dataset (High/Medium).
-
-- **Extreme / elevated anomaly scores**  
-  User has very high maximum anomaly score or high average anomaly score (High/Medium).
-
-- **Predominantly off-hours activity**  
-  Majority of activity outside 08:00–18:00 if user has enough events (Medium).
-
-- **Many distinct IP addresses used**  
-  Could indicate credential sharing or risky behaviour (Medium).
-
-- **Dormant but active accounts**  
-  Active account with no activity in the last 180 days (Low).
-
-Each finding is turned into a risk record with:
-- `risk_type`
-- `severity`
-- `description`
-- `evidence`
-- `severity_score` (numeric mapping of severity for reporting)
-
-## 5. Power BI (or Tableau) report
-
-Because Power BI Desktop runs only on Windows, the actual `.pbix` file and UI
-cannot be generated directly here. However, you or a reviewer can:
-
-1. Open Power BI Desktop on Windows.
-2. Use **Get Data → Text/CSV** to load all CSVs in `data/processed/`.
-3. Create relationships:
-   - `users.user_id` ↔ `risk_register.masked_user`
-   - `users.user_id` ↔ `permissions.user_id`
-   - `users.user_id` ↔ `logs_enriched.masked_user`
-4. Build visuals such as:
-   - KPI cards: total risks, high risks, users with risks, admins without MFA
-   - Bar charts: risks by severity, risks by department, risks by type
-   - Table: top risky users (user, department, role, risk_type, severity)
-   - Drillthrough page: per-user event timeline and risk details.
-
-The `reports/powerbi/screenshots/` folder contains placeholder PNGs that you
-can replace with real screenshots from Power BI once you build the report.
-
-## 6. How to use this in your CV / portfolio
-
-You can describe this project as:
-
-> *Automated IT Audit Risk Dashboard (Python, Power BI)*  
-> • Used a public enterprise access-log dataset to simulate an IT access review across many users and events.  
-> • Built a Python pipeline (pandas) to enrich logs with synthetic user and permissions data, derive behaviour metrics, and generate an IT risk register (high/medium/low severity).  
-> • Implemented audit rules for admin accounts without MFA, ex-employee accounts still active, anomalous access behaviour, off-hours activity, dormant accounts, and excessive IP usage.  
-> • Designed a Power BI report concept with risk KPIs, department breakdowns, and user-level drilldowns suitable for ITGC / access management reviews.
-
-You can push this repo to GitHub and link it directly in your CV and LinkedIn.
+📌 Key Skills Demonstrated
+	•	Python (pandas, data processing)
+	•	Designing audit logic & controls
+	•	Building synthetic user / permissions models
+	•	Log enrichment & behavioural analytics
+	•	Risk scoring methodology
+	•	End-to-end pipeline design
+	•	Dashboard-ready data modelling
